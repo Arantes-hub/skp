@@ -11,5 +11,25 @@ export default defineConfig(({ mode }) => {
       'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
       'process.env.SUPABASE_KEY': JSON.stringify(env.SUPABASE_KEY),
     },
+    build: {
+      rollupOptions: {
+        external: [
+          'react',
+          'react-dom',
+          '@google/genai',
+          'jspdf',
+          'html2canvas',
+          'lucide-react',
+          '@supabase/supabase-js'
+        ],
+        output: {
+          globals: {
+            react: 'React',
+            'react-dom': 'ReactDOM',
+            '@google/genai': 'GoogleGenAI',
+          },
+        },
+      },
+    },
   };
 });
