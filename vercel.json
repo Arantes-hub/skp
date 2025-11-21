@@ -2,7 +2,7 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "installCommand": "npm install --no-package-lock",
+  "installCommand": "npm install",
   "rewrites": [
     {
       "source": "/(.*)",
