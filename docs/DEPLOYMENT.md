@@ -21,30 +21,14 @@ Este passo é obrigatório para o login e cursos funcionarem.
 
 ## 2. Enviar Código para o GitHub
 
-Tem duas opções. Se o terminal falhar, use a **Opção B**.
+Como está a utilizar o Google AI Studio, este processo é automático:
 
-### Opção A: Via Terminal (Recomendado)
-1.  **Baixar o Projeto**: Baixe os arquivos (Zip) para o seu computador e extraia.
-2.  **Criar Repositório**: No site do [GitHub](https://github.com), crie um repositório vazio.
-3.  **Terminal**: Abra o terminal na pasta do projeto e rode:
-
-    ```bash
-    git init
-    git add .
-    git commit -m "Upload manual"
-    git branch -M main
-    git remote add origin https://github.com/SEU_USUARIO/SEU_REPO.git
-    git push -u origin main --force
-    ```
-
-### Opção B: Arrastar e Largar (Se o Terminal falhar)
-Se tiver erros de autenticação no terminal:
-1.  Vá à página do seu repositório no site do GitHub.
-2.  Clique em **Add file** > **Upload files**.
-3.  No seu computador, abra a pasta do projeto.
-4.  **IMPORTANTE**: Apague a pasta `node_modules` ou **não a selecione**.
-5.  Selecione todos os outros arquivos e arraste-os para a página do GitHub.
-6.  Aguarde o upload e clique no botão verde **Commit changes**.
+1.  No topo do Google AI Studio, clique no botão **Export** ou no ícone do GitHub.
+2.  Selecione **"Push to GitHub"**.
+3.  Conecte a sua conta GitHub (se ainda não o fez).
+4.  Escolha criar um **New Repository** (ex: `skillspark-app`).
+5.  Clique em **Push**.
+    *   *Nota: Sempre que fizer alterações aqui no AI Studio, repita este passo para atualizar o seu site.*
 
 ---
 
@@ -54,11 +38,11 @@ Se tiver erros de autenticação no terminal:
 2.  **Novo Projeto**:
     *   No Dashboard, clique no botão **"Add New..."** -> **"Project"**.
 3.  **Importar**:
-    *   Na lista "Import Git Repository", encontre o `SkillSpark`.
+    *   Na lista "Import Git Repository", deve aparecer o repositório `skillspark-app` que acabou de criar.
     *   Clique no botão azul **Import**.
-4.  **Configurar (Importante)**:
+4.  **Configurar (Importante)**:    
     *   **Project Name:** Deixe como está.
-    *   **Framework Preset:** Certifique-se que diz `Vite`.
+    *   **Framework Preset:** A Vercel deve detetar `Vite` automaticamente. Se não, selecione `Vite`.
     *   **Environment Variables** (Clique para expandir):
         *   **Key**: Escreva `API_KEY`
         *   **Value**: Cole a sua chave do Google AI (começa por `AIza...`).
