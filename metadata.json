@@ -1,0 +1,5 @@
+{
+  "name": "SkillSpark 2",
+  "description": "SkillSpark is an AI-powered platform for automatically generating complete courses. Users answer simple questions, and the AI creates a full course structure, including modules, objectives, and summaries, which can be downloaded as a PDF.",
+  "requestFramePermissions": []
+}

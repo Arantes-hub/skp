@@ -1,0 +1,34 @@
+
+{
+  "short_name": "SkillSpark",
+  "name": "SkillSpark: AI Course Generator",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#6C63FF",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "description": "Use AI to generate complete, personalized courses on any topic in minutes.",
+  "categories": ["education", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/google-gemini-vignettes/pwa-icons/main/skillspark/icon-180x180.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "apple touch icon"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/google-gemini-vignettes/pwa-icons/main/skillspark/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/google-gemini-vignettes/pwa-icons/main/skillspark/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}

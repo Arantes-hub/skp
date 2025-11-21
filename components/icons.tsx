@@ -1,0 +1,26 @@
+import { Rocket, BrainCircuit, BookOpen, LogIn, LogOut, User, FileDown, Stars, Languages, Menu, X, CheckCircle, Github, Twitter, Mail, Video, Download, Sun, Moon, Quote, Star, Check } from 'lucide-react';
+
+export const Icons = {
+  Rocket,
+  BrainCircuit,
+  BookOpen,
+  LogIn,
+  LogOut,
+  User,
+  FileDown,
+  Stars,
+  Languages,
+  Menu,
+  X,
+  CheckCircle,
+  Github,
+  Twitter,
+  Mail,
+  Video,
+  Download,
+  Sun,
+  Moon,
+  Quote,
+  Star,
+  Check,
+};
