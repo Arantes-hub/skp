@@ -25,3 +25,23 @@ interface Window {
     openSelectKey: () => Promise<void>;
   };
 }
+
+declare module "@google/genai" {
+  export class GoogleGenAI {
+    constructor(config: { apiKey: string });
+    models: any;
+    chats: any;
+    operations: any;
+    live: any;
+  }
+  export const Type: any;
+  export type GenerateContentResponse = any;
+  export type GenerateVideosOperation = any;
+  export type FunctionDeclaration = any;
+  export enum Modality {
+      AUDIO = 'AUDIO',
+      TEXT = 'TEXT',
+      IMAGE = 'IMAGE',
+      VIDEO = 'VIDEO'
+  }
+}

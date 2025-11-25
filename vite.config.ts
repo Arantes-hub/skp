@@ -12,7 +12,15 @@ export default defineConfig(({ mode }) => {
       'process.env.SUPABASE_KEY': JSON.stringify(env.SUPABASE_KEY),
     },
     build: {
-      chunkSizeWarningLimit: 1600, // Increases limit to 1600kB to silence the warning
-    },
+      chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        external: ['@google/genai'],
+        output: {
+          paths: {
+            '@google/genai': 'https://esm.run/@google/genai'
+          }
+        }
+      }
+    }
   };
 });
