@@ -14,18 +14,10 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         external: [
-          'react',
-          'react-dom',
-          '@google/genai',
-          'jspdf',
-          'html2canvas',
-          'lucide-react',
-          '@supabase/supabase-js'
+          '@google/genai'
         ],
         output: {
           globals: {
-            react: 'React',
-            'react-dom': 'ReactDOM',
             '@google/genai': 'GoogleGenAI',
           },
         },
