@@ -11,5 +11,8 @@ export default defineConfig(({ mode }) => {
       'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
       'process.env.SUPABASE_KEY': JSON.stringify(env.SUPABASE_KEY),
     },
+    build: {
+      chunkSizeWarningLimit: 1600, // Increases limit to 1600kB to silence the warning
+    },
   };
 });
