@@ -11,17 +11,5 @@ export default defineConfig(({ mode }) => {
       'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
       'process.env.SUPABASE_KEY': JSON.stringify(env.SUPABASE_KEY),
     },
-    build: {
-      rollupOptions: {
-        external: [
-          '@google/genai'
-        ],
-        output: {
-          globals: {
-            '@google/genai': 'GoogleGenAI',
-          },
-        },
-      },
-    },
   };
 });
