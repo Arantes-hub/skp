@@ -322,9 +322,9 @@ export const CourseResultPage: React.FC = () => {
                              {currentUser?.isPremium && !isReadOnly && activeModule.status === 'completed' && (
                                 <div className="relative group">
                                     <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><Icons.FileDown className="w-5 h-5"/></button>
-                                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button onClick={() => exportToMarkdown(courseData)} className="w-full text-left px-4 py-2 text-sm">{t.courseResult.exportAsMarkdown}</button>
-                                        <button onClick={() => exportToPlainText(courseData)} className="w-full text-left px-4 py-2 text-sm">{t.courseResult.exportAsText}</button>
+                                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto">
+                                        <button onClick={() => exportToMarkdown(courseData)} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-t-lg">{t.courseResult.exportAsMarkdown}</button>
+                                        <button onClick={() => exportToPlainText(courseData)} className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-b-lg">{t.courseResult.exportAsText}</button>
                                     </div>
                                 </div>
                              )}
