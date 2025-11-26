@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect, PropsWithChildren } from 'react';
 import type { Language, Page, User, Course, Theme, AppContextType, Toast as ToastType } from '../types';
 // SWITCHED TO SUPABASE SERVICE
@@ -109,9 +108,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
   };
   
   const viewCourseFromHistory = (course: Course) => {
-    // When viewing from history, assume all modules are completed/generated
-    // But if we have legacy data or partial data, we should check status
-    // For now, let's just set it.
     const restoredCourse = {
         ...course,
         modules: course.modules.map(m => ({ ...m, status: m.status || 'completed' }))
@@ -139,6 +135,14 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
       return backendService.getNote(currentUser.uid, courseId, moduleId);
   }
 
+  // New: Method to manually refresh profile
+  const refreshProfile = async () => {
+      const updatedUser = await backendService.refreshUserSession();
+      if (updatedUser) {
+          setCurrentUser(updatedUser);
+      }
+  };
+
   // === LAZY LOADING MODULES ===
   const triggerModuleGeneration = async (course: Course, moduleIndex: number) => {
     // Prevent double generation
@@ -153,10 +157,8 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     setGeneratedCourse(tempCourse);
 
     try {
-        // We don't have the original form data here, so we infer defaults or simple params
-        // Ideally we would store the generation params in the course object, but for now:
-        const hasExercise = true; // Defaulting for lazy load simplicity
-        const level = 'intermediate'; // Defaulting
+        const hasExercise = true; 
+        const level = 'intermediate';
 
         const moduleData = await generateSingleModule(
             course.title,
@@ -176,7 +178,6 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
         const finalCourse = { ...tempCourse, modules: finalModules };
         
         setGeneratedCourse(finalCourse);
-        // Also save to backend so progress is persisted
         if (currentUser) {
             await backendService.saveCourse(finalCourse);
         }
@@ -197,7 +198,7 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
     translatedCourse, setTranslatedCourse, addCourseToHistory, getUserCourses, getUserCourseCount,
     getCourseProgress, toggleModuleCompletion, sharedCourse, setSharedCourse,
     installPrompt, setInstallPrompt, theme, setTheme, viewCourseFromHistory,
-    showToast, saveQuizScore, getQuizScore, saveNote, getNote, triggerModuleGeneration
+    showToast, saveQuizScore, getQuizScore, saveNote, getNote, triggerModuleGeneration, refreshProfile
   };
 
   return (

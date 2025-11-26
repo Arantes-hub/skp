@@ -115,4 +115,7 @@ export interface AppContextType {
   
   // Lazy Loading Feature
   triggerModuleGeneration: (course: Course, moduleIndex: number) => Promise<void>;
+
+  // Profile refresh
+  refreshProfile: () => Promise<void>;
 }

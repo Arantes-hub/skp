@@ -207,7 +207,8 @@ export const suggestIdeas = async (language: 'pt' | 'en'): Promise<string[]> => 
 
 export const generateModuleVideo = async (module: Module): Promise<string> => {
     const videoAI = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-    const prompt = `Create a short, dynamic summary video for a single course module titled "${module.title}". The module content is about: ${module.summary}. Keep the video focused and engaging, suitable for an e-learning platform.`;
+    
+    const prompt = `Create a high-quality, cinematic, and educational video summary for the course module titled "${module.title}". \n\nContext/Summary: ${module.summary}. \n\nThe visual style should be realistic, clean, and professional, suitable for an online course. Focus on illustrating the core concept described in the summary.`;
 
     try {
         const initialApiCall = () => videoAI.models.generateVideos({

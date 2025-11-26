@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -13,7 +12,8 @@ import { Spinner } from './components/Spinner';
 import * as backendService from './services/supabaseService';
 
 const AppContent = () => {
-    const { page, setInstallPrompt, isLoading, showAuthModal, setSharedCourse, setGeneratedCourse, setPage, currentUser, showToast, language } = useAppContext();
+    const { page, setInstallPrompt, isLoading, showAuthModal, setSharedCourse, setGeneratedCourse, setPage, currentUser, showToast, language, refreshProfile } = useAppContext();
+    const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
@@ -46,40 +46,59 @@ const AppContent = () => {
             const url = window.location.href;
             
             // Check for payment success flag in URL
+            // We ensure we wait for currentUser to be loaded so we have the UID to update
             if (url.includes('payment_success=true') && !isLoading && currentUser) {
-                // 1. Remove the query parameter immediately to prevent loops or bad states
-                const newUrl = window.location.href.replace('?payment_success=true', '').replace('&payment_success=true', '');
-                window.history.replaceState({}, document.title, newUrl);
-
-                // 2. Update the user in Database
+                setIsVerifyingPayment(true);
+                
+                // 1. Update the user in Database
                 try {
+                    console.log("Payment detected. Updating user profile...");
                     await backendService.updateUser(currentUser.uid, { isPremium: true });
                     
                     const successMsg = language === 'pt' 
-                        ? 'Pagamento recebido! A sua conta agora é Premium.' 
-                        : 'Payment received! Your account is now Premium.';
+                        ? 'Pagamento confirmado! A sua conta agora é Premium.' 
+                        : 'Payment confirmed! Your account is now Premium.';
                     
                     showToast(successMsg, 'success');
 
-                    // 3. Force a full page reload to ensure the Premium status is reflected everywhere
-                    // (AppContext, LocalStorage, cached UI states)
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
+                    // 2. Remove the query parameter
+                    const newUrl = window.location.href.replace('?payment_success=true', '').replace('&payment_success=true', '');
+                    window.history.replaceState({}, document.title, newUrl);
 
-                } catch (error) {
+                    // 3. Refresh profile internally without full reload
+                    await refreshProfile();
+                    
+                    // 4. Force navigation to generator to "unlock" it visually
+                    setPage('generator');
+
+                } catch (error: any) {
                     console.error("Error upgrading user:", error);
-                    showToast("Error activating premium. Please contact support.", 'error');
+                    
+                    // Specific error message for RLS policy issues
+                    if (error.message && (error.message.includes("policy") || error.message.includes("permission"))) {
+                        const rlsMsg = language === 'pt'
+                            ? "Erro de Permissão: Execute o script FIX_DATABASE.sql no Supabase."
+                            : "Database Permission Error: Please run FIX_DATABASE.sql in Supabase.";
+                        showToast(rlsMsg, 'error');
+                    } else {
+                        showToast("Error activating premium. Please contact support.", 'error');
+                    }
+                } finally {
+                    setIsVerifyingPayment(false);
                 }
             }
         };
 
         handlePaymentSuccess();
-    }, [isLoading, currentUser, showToast, language]);
+    }, [isLoading, currentUser, showToast, language, refreshProfile, setPage]);
 
 
-    if (isLoading) {
-        return <div className="min-h-screen flex items-center justify-center"><Spinner text="Loading SkillSpark..." /></div>;
+    if (isLoading || isVerifyingPayment) {
+        return (
+            <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+                <Spinner text={isVerifyingPayment ? (language === 'pt' ? "A verificar pagamento..." : "Verifying payment...") : "Loading SkillSpark..."} />
+            </div>
+        );
     }
 
     const renderPage = () => {
