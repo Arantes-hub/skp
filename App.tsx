@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import { Header } from './components/Header';
@@ -12,7 +13,7 @@ import { Spinner } from './components/Spinner';
 import * as backendService from './services/supabaseService';
 
 const AppContent = () => {
-    const { page, setInstallPrompt, isLoading, showAuthModal, setSharedCourse, setGeneratedCourse, setPage } = useAppContext();
+    const { page, setInstallPrompt, isLoading, showAuthModal, setSharedCourse, setGeneratedCourse, setPage, currentUser, showToast, language } = useAppContext();
 
     useEffect(() => {
         const handleBeforeInstallPrompt = (e: Event) => {
@@ -38,6 +39,44 @@ const AppContent = () => {
             });
         }
     }, [setSharedCourse, setPage]);
+
+    // --- GLOBAL PAYMENT LISTENER ---
+    useEffect(() => {
+        const handlePaymentSuccess = async () => {
+            const url = window.location.href;
+            
+            // Check for payment success flag in URL
+            if (url.includes('payment_success=true') && !isLoading && currentUser) {
+                // 1. Remove the query parameter immediately to prevent loops or bad states
+                const newUrl = window.location.href.replace('?payment_success=true', '').replace('&payment_success=true', '');
+                window.history.replaceState({}, document.title, newUrl);
+
+                // 2. Update the user in Database
+                try {
+                    await backendService.updateUser(currentUser.uid, { isPremium: true });
+                    
+                    const successMsg = language === 'pt' 
+                        ? 'Pagamento recebido! A sua conta agora é Premium.' 
+                        : 'Payment received! Your account is now Premium.';
+                    
+                    showToast(successMsg, 'success');
+
+                    // 3. Force a full page reload to ensure the Premium status is reflected everywhere
+                    // (AppContext, LocalStorage, cached UI states)
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+
+                } catch (error) {
+                    console.error("Error upgrading user:", error);
+                    showToast("Error activating premium. Please contact support.", 'error');
+                }
+            }
+        };
+
+        handlePaymentSuccess();
+    }, [isLoading, currentUser, showToast, language]);
+
 
     if (isLoading) {
         return <div className="min-h-screen flex items-center justify-center"><Spinner text="Loading SkillSpark..." /></div>;

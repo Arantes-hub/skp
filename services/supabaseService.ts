@@ -165,6 +165,14 @@ export const updateUser = async (uid: string, data: Partial<User>): Promise<User
     return updated;
 };
 
+export const refreshUserSession = async (): Promise<User | null> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+        return getUserProfile(session.user.id);
+    }
+    return null;
+};
+
 // --- COURSE DATA MANAGEMENT ---
 
 export const saveCourse = async (course: Course): Promise<void> => {

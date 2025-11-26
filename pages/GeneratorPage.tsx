@@ -7,7 +7,6 @@ import type { GeneratorForm } from '../types';
 import { Spinner } from '../components/Spinner';
 import { Icons } from '../components/icons';
 import { redirectToCheckout } from '../services/stripeService';
-import * as backendService from '../services/supabaseService';
 
 const TOTAL_STEPS = 5;
 
@@ -109,7 +108,6 @@ export const GeneratorPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [isSuggesting, setIsSuggesting] = useState(false);
     const [showPaywall, setShowPaywall] = useState(false);
-    const [paymentSuccess, setPaymentSuccess] = useState(false);
 
     useEffect(() => {
         if (!currentUser) {
@@ -117,37 +115,6 @@ export const GeneratorPage: React.FC = () => {
             setPage('landing');
         }
     }, [currentUser, setPage, setShowAuthModal]);
-
-    // Detect payment success from URL (Redirection from Stripe)
-    useEffect(() => {
-        const url = window.location.href;
-        if (url.includes('payment_success=true') && currentUser) {
-            // Clean URL to prevent loop
-            const newUrl = window.location.href.replace('?payment_success=true', '').replace('&payment_success=true', '');
-            window.history.replaceState({}, document.title, newUrl);
-
-            setPaymentSuccess(true);
-            setShowPaywall(false);
-            
-            // 1. Update database
-            backendService.updateUser(currentUser.uid, { isPremium: true })
-                .then(() => {
-                    const successMsg = language === 'pt' 
-                        ? 'Pagamento recebido! A sua conta agora é Premium.' 
-                        : 'Payment received! Your account is now Premium.';
-                    showToast(successMsg, 'success');
-
-                    // 2. Force page reload to update AppContext/CurrentUser state immediately
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
-                })
-                .catch(err => {
-                    console.error("Error upgrading user:", err);
-                    showToast("Error activating premium. Please contact support.", 'error');
-                });
-        }
-    }, [language, showToast, currentUser]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -187,8 +154,8 @@ export const GeneratorPage: React.FC = () => {
         }
 
         // --- PAYWALL CHECK ---
-        // Skip check if user is premium OR if they just came back from a successful payment
-        if (!currentUser.isPremium && !paymentSuccess) {
+        // Skip check if user is premium
+        if (!currentUser.isPremium) {
             try {
                 const count = await getUserCourseCount();
                 if (count >= 1) {
