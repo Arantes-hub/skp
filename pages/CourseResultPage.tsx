@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { translations } from '../utils/translations';
@@ -340,25 +341,35 @@ export const CourseResultPage: React.FC = () => {
                     {(activeModule.status === 'completed' || !activeModule.status) && (
                         <div className="animate-fade-in">
                             
-                            {/* Updated Typography for Better Reading Experience */}
-                            <div className="prose prose-lg dark:prose-invert max-w-none font-serif leading-relaxed text-gray-800 dark:text-gray-200" dangerouslySetInnerHTML={{ __html: activeModule.detailedContent }}></div>
+                            {/* Updated Typography for Better Reading Experience - Loose leading, more margin */}
+                            <div className="prose prose-lg dark:prose-invert max-w-none font-serif leading-loose text-gray-800 dark:text-gray-200 prose-p:mb-6 prose-headings:mt-8 prose-headings:mb-4 prose-li:mb-2" dangerouslySetInnerHTML={{ __html: activeModule.detailedContent }}></div>
                             
                             {activeModule.exercise && (
-                                <div className="mt-8 p-5 bg-purple-50 dark:bg-purple-900/50 border-l-4 border-purple-400 rounded-r-lg font-sans">
-                                    <p className="font-bold text-purple-800 dark:text-purple-300 text-xl">Practical Exercise</p>
-                                    <p className="mt-2 text-gray-700 dark:text-gray-300">{activeModule.exercise}</p>
-                                    {activeModule.exerciseSolution && <details className="mt-4"><summary className="cursor-pointer font-semibold text-purple-700 dark:text-purple-300">View Solution</summary><div className="mt-2 p-4 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700"><p>{activeModule.exerciseSolution}</p></div></details>}
+                                <div className="mt-10 p-6 bg-purple-50 dark:bg-purple-900/50 border-l-4 border-purple-400 rounded-r-lg font-sans shadow-sm">
+                                    <p className="font-bold text-purple-800 dark:text-purple-300 text-xl mb-3">Practical Exercise</p>
+                                    
+                                    {/* FIX: Render exercise as HTML to avoid showing tags like </strong> */}
+                                    <div className="text-gray-700 dark:text-gray-300 prose dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeModule.exercise }}></div>
+
+                                    {activeModule.exerciseSolution && (
+                                        <details className="mt-4">
+                                            <summary className="cursor-pointer font-semibold text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-purple-100 transition-colors">View Solution</summary>
+                                            <div className="mt-3 p-4 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700 text-gray-600 dark:text-gray-300">
+                                                 <div dangerouslySetInnerHTML={{ __html: activeModule.exerciseSolution }}></div>
+                                            </div>
+                                        </details>
+                                    )}
                                 </div>
                             )}
 
                             {!isReadOnly && currentUser && <NotesSection courseId={courseData.id} moduleId={safeActiveIndex} />}
                             
                             {/* Next Module / Finish Navigation */}
-                            <div className="mt-12 flex justify-between font-sans">
+                            <div className="mt-16 flex justify-between font-sans">
                                 <button 
                                     onClick={() => handleModuleChange(Math.max(0, safeActiveIndex - 1))}
                                     disabled={safeActiveIndex === 0}
-                                    className="px-4 py-2 rounded-lg border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                                    className="px-5 py-2.5 rounded-lg border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
                                 >
                                     Previous
                                 </button>
@@ -368,14 +379,14 @@ export const CourseResultPage: React.FC = () => {
                                             handleToggleModule(safeActiveIndex); // Mark current as done
                                             handleModuleChange(safeActiveIndex + 1); // Go to next
                                         }}
-                                        className="px-6 py-2 rounded-lg bg-[#6C63FF] text-white hover:bg-[#5850e0] shadow-md transition-all transform hover:scale-105"
+                                        className="px-8 py-2.5 rounded-lg bg-[#6C63FF] text-white hover:bg-[#5850e0] shadow-md transition-all transform hover:scale-105 font-medium"
                                     >
                                         Mark Done & Next
                                     </button>
                                 ) : (
                                     <button 
                                         onClick={handleFinishAndQuiz}
-                                        className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-lg font-bold flex items-center gap-2 transition-all transform hover:scale-105 animate-pulse"
+                                        className="px-8 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-lg font-bold flex items-center gap-2 transition-all transform hover:scale-105 animate-pulse"
                                     >
                                         <Icons.CheckCircle className="w-5 h-5"/>
                                         {t.courseResult.finishAndQuiz}
