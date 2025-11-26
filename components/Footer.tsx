@@ -17,13 +17,13 @@ export const Footer: React.FC = () => {
             <span className="text-xl font-bold text-gray-800 dark:text-gray-100">SkillSpark</span>
           </div>
           <div className="flex space-x-6 text-gray-600 dark:text-gray-300">
-            <a href="#" className="hover:text-[#6C63FF] dark:hover:text-white transition-colors">{t.footer.contact}</a>
+            <a href="mailto:myskillspark2025@gmail.com" className="hover:text-[#6C63FF] dark:hover:text-white transition-colors">{t.footer.contact}</a>
             <a href="#" className="hover:text-[#6C63FF] dark:hover:text-white transition-colors">{t.footer.privacy}</a>
           </div>
           <div className="flex space-x-4">
             <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"><Icons.Twitter className="h-6 w-6" /></a>
             <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"><Icons.Github className="h-6 w-6" /></a>
-            <a href="#" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"><Icons.Mail className="h-6 w-6" /></a>
+            <a href="mailto:myskillspark2025@gmail.com" className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"><Icons.Mail className="h-6 w-6" /></a>
           </div>
         </div>
         <div className="text-center text-gray-500 dark:text-gray-400 mt-8">

@@ -27,6 +27,7 @@ interface Window {
 }
 
 declare var fbq: any;
+declare module 'canvas-confetti';
 
 declare module "@google/genai" {
   export class GoogleGenAI {

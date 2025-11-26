@@ -7,6 +7,11 @@
     <meta name="description" content="Use AI to generate complete, personalized courses on any topic in minutes.">
     <meta name="keywords" content="criar cursos com IA, gerador de cursos online, SkillSpark, AI course generator">
     
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+
     <!-- Meta Pixel Code -->
     <script>
     !function(f,b,e,v,n,t,s)
@@ -48,6 +53,10 @@
         darkMode: 'class', // or 'media'
         theme: {
           extend: {
+             fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+                serif: ['Merriweather', 'serif'],
+             },
              animation: {
               'fade-in': 'fade-in 0.5s ease-out forwards',
             },
@@ -65,6 +74,7 @@
 {
   "imports": {
     "@google/genai": "https://esm.run/@google/genai",
+    "canvas-confetti": "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm",
     "react": "https://aistudiocdn.com/react@^19.2.0",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "jspdf": "https://aistudiocdn.com/jspdf@^3.0.4",
@@ -78,7 +88,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+  <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300 font-sans">
     <!-- Meta Pixel NoScript -->
     <noscript><img height="1" width="1" style="display:none"
     src="https://www.facebook.com/tr?id=1234567890&ev=PageView&noscript=1"

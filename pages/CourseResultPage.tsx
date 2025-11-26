@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { translations } from '../utils/translations';
@@ -9,6 +8,7 @@ import { Icons } from '../components/icons';
 import type { Course, Module, Quiz } from '../types';
 import { QuizView } from '../components/QuizView';
 import { Spinner } from '../components/Spinner';
+import confetti from 'canvas-confetti';
 
 const ProgressBar = ({ completed, total }: { completed: number; total: number }) => {
     const percentage = total > 0 ? (completed / total) * 100 : 0;
@@ -185,6 +185,15 @@ export const CourseResultPage: React.FC = () => {
         if (!completedModules.has(safeActiveIndex)) {
              await handleToggleModule(safeActiveIndex);
         }
+        
+        // Trigger Confetti!
+        confetti({
+            particleCount: 150,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#6C63FF', '#4CAF50', '#FFC107', '#FF3D00']
+        });
+
         // Start quiz generation
         handleGenerateQuiz();
     };
@@ -194,6 +203,16 @@ export const CourseResultPage: React.FC = () => {
         setFinalScore({ score, total });
         setQuiz(null);
         showToast(`Quiz completed! You scored ${score}/${total}`, 'success');
+        
+        // More confetti on passing!
+        if (score / total > 0.5) {
+             confetti({
+                particleCount: 100,
+                spread: 100,
+                origin: { y: 0.5 }
+             });
+        }
+        
         setShowCertModal(true); // Automatically offer certificate
     }
 
@@ -231,7 +250,7 @@ export const CourseResultPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <aside className="md:col-span-1 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg h-fit sticky top-24">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">{t.courseResult.courseNavigation}</h2>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 font-sans">{t.courseResult.courseNavigation}</h2>
                         {!isReadOnly && <span className="text-sm font-medium text-gray-500">{completedModules.size} / {courseData.modules.length}</span>}
                     </div>
                     {!isReadOnly && <ProgressBar completed={completedModules.size} total={courseData.modules.length} />}
@@ -250,7 +269,7 @@ export const CourseResultPage: React.FC = () => {
                         ))}
                     </ul>
                     {!isReadOnly && allModulesCompleted && (
-                        <div className="mt-6 text-center p-4 bg-green-100 dark:bg-green-900/50 rounded-lg">
+                        <div className="mt-6 text-center p-4 bg-green-100 dark:bg-green-900/50 rounded-lg animate-fade-in">
                             <p className="font-semibold text-green-800 dark:text-green-300">{t.courseResult.allModulesCompleted}</p>
                             
                             {finalScore && (
@@ -268,7 +287,7 @@ export const CourseResultPage: React.FC = () => {
 
                 <main className="md:col-span-3 bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-2xl shadow-lg min-h-[500px]">
                     <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-2xl sm:text-3xl font-bold text-[#6C63FF]">{activeModule.title}</h3>
+                        <h3 className="text-2xl sm:text-3xl font-bold text-[#6C63FF] font-sans">{activeModule.title}</h3>
                         <div className="flex items-center gap-2">
                              {!isReadOnly && <button onClick={handleShare} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"><Icons.Menu className="w-5 h-5"/></button>}
                              {currentUser?.isPremium && !isReadOnly && activeModule.status === 'completed' && (
@@ -321,24 +340,25 @@ export const CourseResultPage: React.FC = () => {
                     {(activeModule.status === 'completed' || !activeModule.status) && (
                         <div className="animate-fade-in">
                             
-                            <div className="prose prose-lg dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeModule.detailedContent }}></div>
+                            {/* Updated Typography for Better Reading Experience */}
+                            <div className="prose prose-lg dark:prose-invert max-w-none font-serif leading-relaxed text-gray-800 dark:text-gray-200" dangerouslySetInnerHTML={{ __html: activeModule.detailedContent }}></div>
                             
                             {activeModule.exercise && (
-                                <div className="mt-8 p-5 bg-purple-50 dark:bg-purple-900/50 border-l-4 border-purple-400 rounded-r-lg">
+                                <div className="mt-8 p-5 bg-purple-50 dark:bg-purple-900/50 border-l-4 border-purple-400 rounded-r-lg font-sans">
                                     <p className="font-bold text-purple-800 dark:text-purple-300 text-xl">Practical Exercise</p>
-                                    <p className="mt-2">{activeModule.exercise}</p>
-                                    {activeModule.exerciseSolution && <details className="mt-4"><summary className="cursor-pointer font-semibold">View Solution</summary><div className="mt-2 p-4 bg-white dark:bg-gray-800 rounded-lg"><p>{activeModule.exerciseSolution}</p></div></details>}
+                                    <p className="mt-2 text-gray-700 dark:text-gray-300">{activeModule.exercise}</p>
+                                    {activeModule.exerciseSolution && <details className="mt-4"><summary className="cursor-pointer font-semibold text-purple-700 dark:text-purple-300">View Solution</summary><div className="mt-2 p-4 bg-white dark:bg-gray-800 rounded-lg border dark:border-gray-700"><p>{activeModule.exerciseSolution}</p></div></details>}
                                 </div>
                             )}
 
                             {!isReadOnly && currentUser && <NotesSection courseId={courseData.id} moduleId={safeActiveIndex} />}
                             
                             {/* Next Module / Finish Navigation */}
-                            <div className="mt-12 flex justify-between">
+                            <div className="mt-12 flex justify-between font-sans">
                                 <button 
                                     onClick={() => handleModuleChange(Math.max(0, safeActiveIndex - 1))}
                                     disabled={safeActiveIndex === 0}
-                                    className="px-4 py-2 rounded-lg border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
+                                    className="px-4 py-2 rounded-lg border dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
                                 >
                                     Previous
                                 </button>
@@ -348,14 +368,14 @@ export const CourseResultPage: React.FC = () => {
                                             handleToggleModule(safeActiveIndex); // Mark current as done
                                             handleModuleChange(safeActiveIndex + 1); // Go to next
                                         }}
-                                        className="px-6 py-2 rounded-lg bg-[#6C63FF] text-white hover:bg-[#5850e0]"
+                                        className="px-6 py-2 rounded-lg bg-[#6C63FF] text-white hover:bg-[#5850e0] shadow-md transition-all transform hover:scale-105"
                                     >
                                         Mark Done & Next
                                     </button>
                                 ) : (
                                     <button 
                                         onClick={handleFinishAndQuiz}
-                                        className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-lg font-bold flex items-center gap-2"
+                                        className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-lg font-bold flex items-center gap-2 transition-all transform hover:scale-105 animate-pulse"
                                     >
                                         <Icons.CheckCircle className="w-5 h-5"/>
                                         {t.courseResult.finishAndQuiz}

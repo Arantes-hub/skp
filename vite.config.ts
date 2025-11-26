@@ -14,10 +14,11 @@ export default defineConfig(({ mode }) => {
     build: {
       chunkSizeWarningLimit: 1000,
       rollupOptions: {
-        external: ['@google/genai'],
+        external: ['@google/genai', 'canvas-confetti'],
         output: {
           paths: {
-            '@google/genai': 'https://esm.run/@google/genai'
+            '@google/genai': 'https://esm.run/@google/genai',
+            'canvas-confetti': 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/+esm'
           }
         }
       }
