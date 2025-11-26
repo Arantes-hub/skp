@@ -25,12 +25,14 @@ export interface Quiz {
 
 export interface Module {
   title: string;
-  summary: string;
-  detailedContent: string;
+  summary: string; // Initially empty until generated
+  detailedContent: string; // Initially empty until generated
   exercise?: string;
   exerciseSolution?: string;
   videoUrl?: string | null;
   videoState?: 'idle' | 'generating' | 'success' | 'error';
+  // New field for lazy loading
+  status?: 'pending' | 'generating' | 'completed' | 'error';
 }
 
 export interface Course {
@@ -110,4 +112,7 @@ export interface AppContextType {
   getQuizScore: (courseId: string) => Promise<{ score: number; total: number } | undefined>;
   saveNote: (courseId: string, moduleId: number, note: string) => Promise<void>;
   getNote: (courseId: string, moduleId: number) => Promise<string>;
+  
+  // Lazy Loading Feature
+  triggerModuleGeneration: (course: Course, moduleIndex: number) => Promise<void>;
 }

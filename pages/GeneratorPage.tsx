@@ -49,7 +49,7 @@ const PaywallModal = ({ onClose }: { onClose: () => void }) => {
                     <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-4">
                         <Icons.Star className="w-8 h-8 text-amber-500 fill-amber-500" />
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{t.title}</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t.title}</h2>
                     <p className="text-gray-600 dark:text-gray-300 max-w-md mx-auto">{t.description}</p>
                 </div>
 
@@ -198,9 +198,11 @@ export const GeneratorPage: React.FC = () => {
                 setTranslatedCourse(translated);
             }
             setPage('courseResult');
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            setError(t.generator.generationError);
+            // Show the actual error message to help debugging
+            const errorMessage = err?.message || err?.toString() || t.generator.generationError;
+            setError(`${t.generator.generationError} (${errorMessage})`);
         } finally {
             setIsLoading(false);
         }

@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect, Props
 import type { Language, Page, User, Course, Theme, AppContextType, Toast as ToastType } from '../types';
 // SWITCHED TO SUPABASE SERVICE
 import * as backendService from '../services/supabaseService';
+import { generateSingleModule } from '../services/geminiService';
 import { Toast } from '../components/Toast';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -108,7 +109,14 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
   };
   
   const viewCourseFromHistory = (course: Course) => {
-    setGeneratedCourse(course);
+    // When viewing from history, assume all modules are completed/generated
+    // But if we have legacy data or partial data, we should check status
+    // For now, let's just set it.
+    const restoredCourse = {
+        ...course,
+        modules: course.modules.map(m => ({ ...m, status: m.status || 'completed' }))
+    };
+    setGeneratedCourse(restoredCourse as Course);
     setSharedCourse(null);
     setPage('courseResult');
   };
@@ -131,13 +139,65 @@ export const AppProvider = ({ children }: PropsWithChildren) => {
       return backendService.getNote(currentUser.uid, courseId, moduleId);
   }
 
+  // === LAZY LOADING MODULES ===
+  const triggerModuleGeneration = async (course: Course, moduleIndex: number) => {
+    // Prevent double generation
+    if (course.modules[moduleIndex].status === 'generating' || course.modules[moduleIndex].status === 'completed') {
+        return;
+    }
+
+    // Update state to 'generating'
+    const updatedModules = [...course.modules];
+    updatedModules[moduleIndex] = { ...updatedModules[moduleIndex], status: 'generating' };
+    const tempCourse = { ...course, modules: updatedModules };
+    setGeneratedCourse(tempCourse);
+
+    try {
+        // We don't have the original form data here, so we infer defaults or simple params
+        // Ideally we would store the generation params in the course object, but for now:
+        const hasExercise = true; // Defaulting for lazy load simplicity
+        const level = 'intermediate'; // Defaulting
+
+        const moduleData = await generateSingleModule(
+            course.title,
+            course.modules[moduleIndex].title,
+            level,
+            hasExercise,
+            language
+        );
+
+        // Update with real content
+        const finalModules = [...tempCourse.modules];
+        finalModules[moduleIndex] = {
+            ...finalModules[moduleIndex],
+            ...moduleData,
+            status: 'completed'
+        };
+        const finalCourse = { ...tempCourse, modules: finalModules };
+        
+        setGeneratedCourse(finalCourse);
+        // Also save to backend so progress is persisted
+        if (currentUser) {
+            await backendService.saveCourse(finalCourse);
+        }
+
+    } catch (error) {
+        console.error("Failed to generate module:", error);
+        // Set error state
+        const errorModules = [...tempCourse.modules];
+        errorModules[moduleIndex] = { ...errorModules[moduleIndex], status: 'error' };
+        setGeneratedCourse({ ...tempCourse, modules: errorModules });
+        showToast("Error generating module. Please try again.", "error");
+    }
+  };
+
   const value: AppContextType = {
     language, setLanguage, page, setPage, currentUser, isLoading, showAuthModal,
     setShowAuthModal, logout, generatedCourse, setGeneratedCourse,
     translatedCourse, setTranslatedCourse, addCourseToHistory, getUserCourses, getUserCourseCount,
     getCourseProgress, toggleModuleCompletion, sharedCourse, setSharedCourse,
     installPrompt, setInstallPrompt, theme, setTheme, viewCourseFromHistory,
-    showToast, saveQuizScore, getQuizScore, saveNote, getNote,
+    showToast, saveQuizScore, getQuizScore, saveNote, getNote, triggerModuleGeneration
   };
 
   return (

@@ -1,25 +1,42 @@
 
 // Fix: Import GenerateContentResponse and GenerateVideosOperation for explicit typing.
-import { GoogleGenAI, Type, GenerateContentResponse, GenerateVideosOperation } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, GenerateVideosOperation } from "@google/genai";
 import type { GeneratorForm, Course, Module, Quiz } from '../types';
 import { translations } from "../utils/translations";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+// --- ROBUST CONFIGURATION ---
+const apiKey = process.env.API_KEY as string;
+
+if (!apiKey) {
+  console.error("CRITICAL ERROR: API_KEY is missing from environment variables.");
+}
+
+const ai = new GoogleGenAI({ apiKey: apiKey || 'MISSING_KEY' });
+
+// Define Types manually to avoid runtime errors if CDN export is flaky
+const Types = {
+  STRING: 'STRING',
+  NUMBER: 'NUMBER',
+  INTEGER: 'INTEGER',
+  BOOLEAN: 'BOOLEAN',
+  ARRAY: 'ARRAY',
+  OBJECT: 'OBJECT'
+};
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 5, initialDelay = 1000): Promise<T> => {
+const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 3, initialDelay = 2000): Promise<T> => {
     let lastError: any;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             return await fn();
         } catch (error: any) {
             lastError = error;
+            console.warn(`API Attempt ${attempt} failed:`, error);
             const isOverloaded = error.toString().includes('503') || error.toString().toLowerCase().includes('overloaded');
 
-            if (isOverloaded && attempt < maxRetries) {
+            if (attempt < maxRetries) {
                 const delay = initialDelay * Math.pow(2, attempt - 1);
-                console.warn(`API is overloaded. Retrying attempt ${attempt + 1}/${maxRetries} in ${delay}ms...`);
                 await sleep(delay);
             } else {
                 throw lastError;
@@ -29,32 +46,34 @@ const withRetry = async <T>(fn: () => Promise<T>, maxRetries = 5, initialDelay =
     throw lastError;
 };
 
-// New multi-step generation process for better reliability
+// --- STEP 1: Generate Outline Only (Fast) ---
 export const generateCourse = async (
   formData: GeneratorForm,
   language: 'pt' | 'en',
   onProgress: (message: string) => void,
   userUid: string,
 ): Promise<Course> => {
+  if (!apiKey) throw new Error("API configuration missing. Please check your settings.");
+  
   const langInstruction = language === 'pt' ? 'Portuguese (Portugal)' : 'English';
   const t = translations[language];
 
   try {
-    // === STEP 1: Generate Course Outline ===
+    // === Generate Course Outline ===
     onProgress(t.generator.progress.outline);
     
     const outlineSchema = {
-        type: Type.OBJECT,
+        type: Types.OBJECT,
         properties: {
-            title: { type: Type.STRING },
-            description: { type: Type.STRING },
+            title: { type: Types.STRING },
+            description: { type: Types.STRING },
             moduleTitles: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
+                type: Types.ARRAY,
+                items: { type: Types.STRING },
                 description: "A list of 5 to 8 module titles."
             },
-            estimatedDuration: { type: Type.STRING },
-            conclusion: { type: Type.STRING }
+            estimatedDuration: { type: Types.STRING },
+            conclusion: { type: Types.STRING }
         },
         required: ["title", "description", "moduleTitles", "estimatedDuration", "conclusion"]
     };
@@ -73,90 +92,97 @@ export const generateCourse = async (
     });
 
     const outlineResponse: GenerateContentResponse = await withRetry(outlineApiCall);
-    const outlineText = outlineResponse.text.trim().replace(/^```json\s*|```$/g, '');
+    const outlineText = outlineResponse.text?.trim().replace(/^```json\s*|```$/g, '');
+    if (!outlineText) throw new Error("Empty response from AI for outline.");
+    
     const courseOutline = JSON.parse(outlineText);
+
+    // Initialize modules with 'pending' status
+    const initialModules: Module[] = courseOutline.moduleTitles.map((title: string) => ({
+        title: title,
+        summary: "",
+        detailedContent: "",
+        videoState: 'idle',
+        status: 'pending' // Mark as pending so UI knows to generate it later
+    }));
 
     const fullCourse: Course = {
       id: crypto.randomUUID(),
       createdBy: userUid,
       title: courseOutline.title,
       description: courseOutline.description,
-      modules: [],
+      modules: initialModules,
       estimatedDuration: courseOutline.estimatedDuration,
       conclusion: courseOutline.conclusion,
     };
 
-    // === STEP 2: Generate Each Module's Content in a Single Call ===
-    for (let i = 0; i < courseOutline.moduleTitles.length; i++) {
-        const moduleTitle = courseOutline.moduleTitles[i];
-        
-        const progressMsg = t.generator.progress.module
-          .replace('{current}', String(i + 1))
-          .replace('{total}', String(courseOutline.moduleTitles.length))
-          .replace('{title}', moduleTitle);
-        onProgress(progressMsg);
-        
-        const moduleProperties: any = {
-            summary: { type: Type.STRING, description: "A brief, one-sentence summary." },
-            detailedContent: { type: Type.STRING, description: "A comprehensive, multi-paragraph explanation formatted with HTML tags (like <strong>, <ul>, <li>) for better readability." },
-        };
-        const moduleRequired = ["summary", "detailedContent"];
-        let exercisePromptPart = "Do not include an exercise or solution.";
+    return fullCourse;
 
-        if (formData.includeExercises) {
-            moduleProperties.exercise = { type: Type.STRING };
-            moduleProperties.exerciseSolution = { type: Type.STRING };
-            moduleRequired.push("exercise", "exerciseSolution");
-            exercisePromptPart = "Also provide a practical 'exercise' and its corresponding 'exerciseSolution'.";
-        }
+  } catch (error) {
+    console.error("Error generating course outline:", error);
+    throw error;
+  }
+};
 
-        const moduleSchema = { type: Type.OBJECT, properties: moduleProperties, required: moduleRequired };
+// --- STEP 2: Generate Single Module (Lazy Loading) ---
+export const generateSingleModule = async (
+    courseTitle: string,
+    moduleTitle: string,
+    level: string,
+    includeExercises: boolean,
+    language: 'pt' | 'en'
+): Promise<Partial<Module>> => {
+    const langInstruction = language === 'pt' ? 'Portuguese (Portugal)' : 'English';
+    
+    const moduleProperties: any = {
+        summary: { type: Types.STRING, description: "A brief, one-sentence summary." },
+        detailedContent: { type: Types.STRING, description: "A comprehensive, multi-paragraph explanation of the topic. Use basic HTML tags like <strong>, <ul>, <li> for lists to structure the content. Do NOT use markdown." },
+    };
+    const moduleRequired = ["summary", "detailedContent"];
+    let exercisePromptPart = "Do not include an exercise or solution.";
 
-        const modulePrompt = `
-          For a course titled "${courseOutline.title}", generate content for the module "${moduleTitle}".
-          The target audience is at a ${formData.level} level.
-          Provide:
-          1. 'summary': A brief, one-sentence overview.
-          2. 'detailedContent': A comprehensive, multi-paragraph explanation of the topic. Use basic HTML tags like <strong> for emphasis, <ul> and <li> for lists to structure the content.
-          ${exercisePromptPart}
-          Respond in ${langInstruction}.
-        `;
+    if (includeExercises) {
+        moduleProperties.exercise = { type: Types.STRING };
+        moduleProperties.exerciseSolution = { type: Types.STRING };
+        moduleRequired.push("exercise", "exerciseSolution");
+        exercisePromptPart = "Also provide a practical 'exercise' and its corresponding 'exerciseSolution'.";
+    }
 
+    const moduleSchema = { type: Types.OBJECT, properties: moduleProperties, required: moduleRequired };
+
+    const modulePrompt = `
+      For a course titled "${courseTitle}", generate content for the module "${moduleTitle}".
+      The target audience is at a ${level} level.
+      Provide:
+      1. 'summary': A brief, one-sentence overview.
+      2. 'detailedContent': A comprehensive, multi-paragraph explanation. Use basic HTML tags like <strong> for emphasis, <ul> and <li> for lists.
+      ${exercisePromptPart}
+      Respond in ${langInstruction}.
+    `;
+
+    try {
         const moduleApiCall = () => ai.models.generateContent({
-            model: 'gemini-3-pro-preview',
+            model: 'gemini-2.5-flash',
             contents: { parts: [{ text: modulePrompt }] },
             config: { responseMimeType: "application/json", responseSchema: moduleSchema },
         });
 
         const moduleResponse: GenerateContentResponse = await withRetry(moduleApiCall);
-        const moduleText = moduleResponse.text.trim().replace(/^```json\s*|```$/g, '');
-        const moduleContent = JSON.parse(moduleText);
-
-        const newModule: Module = {
-            title: moduleTitle,
-            summary: moduleContent.summary,
-            detailedContent: moduleContent.detailedContent,
-            exercise: moduleContent.exercise,
-            exerciseSolution: moduleContent.exerciseSolution,
-            videoState: 'idle',
-        };
+        const moduleText = moduleResponse.text?.trim().replace(/^```json\s*|```$/g, '');
+        if (!moduleText) throw new Error(`Empty response for module: ${moduleTitle}`);
         
-        fullCourse.modules.push(newModule);
+        return JSON.parse(moduleText);
+    } catch (error) {
+        console.error(`Error generating module ${moduleTitle}:`, error);
+        throw error;
     }
-
-    return fullCourse;
-
-  } catch (error) {
-    console.error("Error generating course:", error);
-    throw error;
-  }
-};
+}
 
 export const suggestIdeas = async (language: 'pt' | 'en'): Promise<string[]> => {
     const langInstruction = language === 'pt' ? 'Portuguese (Portugal)' : 'English';
     const ideasSchema = {
-        type: Type.OBJECT,
-        properties: { ideas: { type: Type.ARRAY, items: { type: Type.STRING } } },
+        type: Types.OBJECT,
+        properties: { ideas: { type: Types.ARRAY, items: { type: Types.STRING } } },
         required: ["ideas"],
     };
     const prompt = `Suggest 3 popular and interesting course topics. Respond in ${langInstruction}.`;
@@ -168,7 +194,10 @@ export const suggestIdeas = async (language: 'pt' | 'en'): Promise<string[]> => 
             config: { responseMimeType: "application/json", responseSchema: ideasSchema }
         });
         const response: GenerateContentResponse = await withRetry(apiCall);
-        const parsed = JSON.parse(response.text.trim().replace(/^```json\s*|```$/g, ''));
+        const text = response.text?.trim().replace(/^```json\s*|```$/g, '');
+        if (!text) return ["Digital Marketing", "Python Programming", "Personal Finance"];
+        
+        const parsed = JSON.parse(text);
         return parsed.ideas;
     } catch (error) {
         console.error("Error suggesting ideas:", error);
@@ -206,20 +235,22 @@ export const generateModuleVideo = async (module: Module): Promise<string> => {
 
 export const generateQuiz = async (course: Course, language: 'pt' | 'en'): Promise<Quiz> => {
     const langInstruction = language === 'pt' ? 'Portuguese (Portugal)' : 'English';
-    const courseContentSummary = course.modules.map(m => `Module "${m.title}": ${m.summary}`).join('\n');
+    // Only include completed modules in the context
+    const completedModules = course.modules.filter(m => m.status === 'completed' || !m.status);
+    const courseContentSummary = completedModules.map(m => `Module "${m.title}": ${m.summary}`).join('\n');
 
     const quizSchema = {
-        type: Type.OBJECT,
+        type: Types.OBJECT,
         properties: {
-            title: { type: Type.STRING },
+            title: { type: Types.STRING },
             questions: {
-                type: Type.ARRAY,
+                type: Types.ARRAY,
                 items: {
-                    type: Type.OBJECT,
+                    type: Types.OBJECT,
                     properties: {
-                        questionText: { type: Type.STRING },
-                        options: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        correctAnswerIndex: { type: Type.INTEGER }
+                        questionText: { type: Types.STRING },
+                        options: { type: Types.ARRAY, items: { type: Types.STRING } },
+                        correctAnswerIndex: { type: Types.INTEGER }
                     },
                     required: ["questionText", "options", "correctAnswerIndex"]
                 }
@@ -241,12 +272,15 @@ export const generateQuiz = async (course: Course, language: 'pt' | 'en'): Promi
 
     try {
         const apiCall = () => ai.models.generateContent({
-            model: 'gemini-3-pro-preview',
+            model: 'gemini-2.5-flash',
             contents: { parts: [{ text: prompt }] },
             config: { responseMimeType: "application/json", responseSchema: quizSchema }
         });
         const response: GenerateContentResponse = await withRetry(apiCall);
-        const parsed = JSON.parse(response.text.trim().replace(/^```json\s*|```$/g, ''));
+        const text = response.text?.trim().replace(/^```json\s*|```$/g, '');
+        if (!text) throw new Error("Empty response for quiz.");
+        
+        const parsed = JSON.parse(text);
         return parsed as Quiz;
     } catch (error) {
         console.error("Error generating quiz:", error);
