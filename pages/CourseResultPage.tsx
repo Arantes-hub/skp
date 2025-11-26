@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { translations } from '../utils/translations';
-import { generateModuleVideo, generateQuiz } from '../services/geminiService';
+import { generateQuiz } from '../services/geminiService';
 import { generateCertificate } from '../services/certificateService';
 import { exportToMarkdown, exportToPlainText } from '../services/exportService';
 import { Icons } from '../components/icons';
@@ -168,54 +168,6 @@ export const CourseResultPage: React.FC = () => {
         setCompletedModules(newSet);
     };
 
-    const handleGenerateModuleVideo = async (moduleIndex: number) => {
-        if (!courseData || isReadOnly) return;
-        
-        // 1. Optimistic UI update
-        const updatedModules = [...courseData.modules];
-        updatedModules[moduleIndex] = { ...updatedModules[moduleIndex], videoState: 'generating' };
-        const updatedCourse = { ...courseData, modules: updatedModules };
-        
-        if (generatedCourse && generatedCourse.id === courseData.id) {
-             setGeneratedCourse(updatedCourse);
-        }
-
-        try {
-            // 2. Call API
-            const videoUrl = await generateModuleVideo(updatedModules[moduleIndex]);
-            
-            // 3. Success Update
-             const successModules = [...courseData.modules];
-             successModules[moduleIndex] = { 
-                 ...successModules[moduleIndex], 
-                 videoUrl, 
-                 videoState: 'success' 
-             };
-             const successCourse = { ...courseData, modules: successModules };
-             
-             if (generatedCourse && generatedCourse.id === courseData.id) {
-                 setGeneratedCourse(successCourse);
-             }
-             // Persist changes
-             if (currentUser) {
-                 addCourseToHistory(successCourse);
-             }
-             showToast(t.courseResult.videoReady, 'success');
-
-        } catch (error) {
-             console.error(error);
-             // 4. Error Update
-             const errorModules = [...courseData.modules];
-             errorModules[moduleIndex] = { ...errorModules[moduleIndex], videoState: 'error' };
-             const errorCourse = { ...courseData, modules: errorModules };
-             
-             if (generatedCourse && generatedCourse.id === courseData.id) {
-                 setGeneratedCourse(errorCourse);
-             }
-             showToast(t.courseResult.videoError, 'error');
-        }
-    }
-
     const handleGenerateQuiz = async () => {
         setIsGeneratingQuiz(true);
         try {
@@ -369,56 +321,6 @@ export const CourseResultPage: React.FC = () => {
                     {(activeModule.status === 'completed' || !activeModule.status) && (
                         <div className="animate-fade-in">
                             
-                            {/* VIDEO SECTION */}
-                            <div className="mb-6">
-                                {activeModule.videoUrl ? (
-                                    <div className="rounded-xl overflow-hidden shadow-lg border dark:border-gray-700 bg-black">
-                                        <video controls className="w-full aspect-video" src={activeModule.videoUrl} poster="https://via.placeholder.com/1280x720?text=Module+Summary+Video">
-                                            Your browser does not support the video tag.
-                                        </video>
-                                    </div>
-                                ) : (
-                                    <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                        <div>
-                                            <h4 className="font-semibold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
-                                                <Icons.Video className="w-5 h-5" />
-                                                Visual Summary
-                                            </h4>
-                                            <p className="text-sm text-indigo-700 dark:text-indigo-400 mt-1">
-                                                {t.courseResult.videoGenerationDesc || "Generate an AI video summary for this module to boost learning."}
-                                            </p>
-                                        </div>
-                                        {currentUser?.isPremium ? (
-                                            <button 
-                                                onClick={() => handleGenerateModuleVideo(safeActiveIndex)}
-                                                disabled={activeModule.videoState === 'generating'}
-                                                className="whitespace-nowrap px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-lg shadow transition-colors disabled:opacity-50 flex items-center gap-2"
-                                            >
-                                                {activeModule.videoState === 'generating' ? (
-                                                    <>
-                                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                                        Generating...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Icons.Stars className="w-4 h-4" />
-                                                        {t.courseResult.generateModuleVideo}
-                                                    </>
-                                                )}
-                                            </button>
-                                        ) : (
-                                            <button 
-                                                onClick={() => setPage('plans')}
-                                                className="whitespace-nowrap px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm font-bold rounded-lg flex items-center gap-2 cursor-pointer hover:bg-gray-300 dark:hover:bg-gray-600"
-                                            >
-                                                <Icons.Star className="w-4 h-4 text-amber-500 fill-amber-500" />
-                                                Premium Only
-                                            </button>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
                             <div className="prose prose-lg dark:prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: activeModule.detailedContent }}></div>
                             
                             {activeModule.exercise && (

@@ -29,8 +29,6 @@ export interface Module {
   detailedContent: string; // Initially empty until generated
   exercise?: string;
   exerciseSolution?: string;
-  videoUrl?: string | null;
-  videoState?: 'idle' | 'generating' | 'success' | 'error';
   // New field for lazy loading
   status?: 'pending' | 'generating' | 'completed' | 'error';
 }

@@ -1,6 +1,6 @@
 
-// Fix: Import GenerateContentResponse and GenerateVideosOperation for explicit typing.
-import { GoogleGenAI, GenerateContentResponse, GenerateVideosOperation } from "@google/genai";
+// Fix: Import GenerateContentResponse for explicit typing.
+import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
 import type { GeneratorForm, Course, Module, Quiz } from '../types';
 import { translations } from "../utils/translations";
 
@@ -102,7 +102,6 @@ export const generateCourse = async (
         title: title,
         summary: "",
         detailedContent: "",
-        videoState: 'idle',
         status: 'pending' // Mark as pending so UI knows to generate it later
     }));
 
@@ -201,35 +200,6 @@ export const suggestIdeas = async (language: 'pt' | 'en'): Promise<string[]> => 
         return parsed.ideas;
     } catch (error) {
         console.error("Error suggesting ideas:", error);
-        throw error;
-    }
-};
-
-export const generateModuleVideo = async (module: Module): Promise<string> => {
-    const videoAI = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
-    
-    const prompt = `Create a high-quality, cinematic, and educational video summary for the course module titled "${module.title}". \n\nContext/Summary: ${module.summary}. \n\nThe visual style should be realistic, clean, and professional, suitable for an online course. Focus on illustrating the core concept described in the summary.`;
-
-    try {
-        const initialApiCall = () => videoAI.models.generateVideos({
-            model: 'veo-3.1-fast-generate-preview',
-            prompt, config: { numberOfVideos: 1, resolution: '720p', aspectRatio: '16:9' }
-        });
-
-        let operation: GenerateVideosOperation = await withRetry(initialApiCall);
-        
-        while (!operation.done) {
-            await sleep(10000);
-            const pollingApiCall = () => videoAI.operations.getVideosOperation({ operation });
-            operation = await withRetry(pollingApiCall);
-        }
-
-        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-        if (!downloadLink) throw new Error("Video generation succeeded, but no URI was returned.");
-        
-        return downloadLink;
-    } catch (error) {
-        console.error("Error generating module video:", error);
         throw error;
     }
 };
