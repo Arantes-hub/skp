@@ -1,4 +1,5 @@
 
+
 export const translations = {
   pt: {
     header: {
@@ -40,6 +41,11 @@ export const translations = {
       suggestIdeas: 'Sugerir ideias com IA',
       step2: 'Qual é o seu nível atual?',
       levels: { beginner: 'Iniciante', intermediate: 'Intermédio', advanced: 'Avançado' },
+      levelDescs: { 
+        beginner: 'Ideal para quem está a começar do zero. Conceitos fundamentais.', 
+        intermediate: 'Para quem já tem bases e quer aprofundar conhecimentos.', 
+        advanced: 'Conteúdo técnico e complexo para especialistas.' 
+      },
       step3: 'Quanto tempo por dia pode estudar?',
       step3Placeholder: 'Ex: 30 minutos',
       step4: 'Quer incluir exercícios práticos?',
@@ -206,6 +212,11 @@ export const translations = {
       suggestIdeas: 'Suggest ideas with AI',
       step2: 'What is your current level?',
       levels: { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' },
+      levelDescs: { 
+        beginner: 'Ideal for those starting from scratch. Fundamental concepts.', 
+        intermediate: 'For those who have basics and want to deepen knowledge.', 
+        advanced: 'Technical and complex content for specialists.' 
+      },
       step3: 'How much time can you study per day?',
       step3Placeholder: 'e.g., 30 minutes',
       step4: 'Do you want to include practical exercises?',

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { translations } from '../utils/translations';
@@ -197,6 +198,13 @@ export const GeneratorPage: React.FC = () => {
     const nextStep = () => setStep(s => Math.min(s + 1, TOTAL_STEPS));
     const prevStep = () => setStep(s => Math.max(s - 1, 1));
 
+    // Level Options Configuration
+    const levelOptions = [
+        { id: 'beginner', icon: Icons.Star, label: t.generator.levels.beginner, desc: t.generator.levelDescs.beginner },
+        { id: 'intermediate', icon: Icons.BookOpen, label: t.generator.levels.intermediate, desc: t.generator.levelDescs.intermediate },
+        { id: 'advanced', icon: Icons.BrainCircuit, label: t.generator.levels.advanced, desc: t.generator.levelDescs.advanced },
+    ];
+
 
     if (isLoading) {
         return <div className="flex items-center justify-center min-h-[60vh]"><Spinner text={loadingMessage || t.generator.loading} /></div>;
@@ -226,14 +234,31 @@ export const GeneratorPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Step 2: Level */}
+                        {/* Step 2: Level (UPDATED to CARDS) */}
                         <div className={`transition-all duration-300 ${step !== 2 ? 'opacity-0 -translate-x-full absolute' : 'opacity-100 translate-x-0'}`}>
-                           <label htmlFor="level" className="block text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">{t.generator.step2}</label>
-                            <select id="level" name="level" value={formData.level} onChange={handleInputChange} className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#6C63FF] focus:border-transparent transition-shadow">
-                                <option value="beginner">{t.generator.levels.beginner}</option>
-                                <option value="intermediate">{t.generator.levels.intermediate}</option>
-                                <option value="advanced">{t.generator.levels.advanced}</option>
-                            </select>
+                           <label className="block text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">{t.generator.step2}</label>
+                            <div className="grid grid-cols-1 gap-4">
+                                {levelOptions.map((opt) => (
+                                    <button
+                                        key={opt.id}
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, level: opt.id as any }))}
+                                        className={`flex items-center p-4 rounded-xl border-2 transition-all text-left group ${
+                                            formData.level === opt.id 
+                                            ? 'border-[#6C63FF] bg-purple-50 dark:bg-purple-900/30' 
+                                            : 'border-gray-200 dark:border-gray-700 hover:border-purple-300 dark:hover:border-purple-700 bg-white dark:bg-gray-800'
+                                        }`}
+                                    >
+                                        <div className={`p-3 rounded-full mr-4 ${formData.level === opt.id ? 'bg-[#6C63FF] text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 group-hover:bg-purple-100 dark:group-hover:bg-gray-600'}`}>
+                                            <opt.icon className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <div className={`font-bold text-lg ${formData.level === opt.id ? 'text-[#6C63FF]' : 'text-gray-800 dark:text-gray-200'}`}>{opt.label}</div>
+                                            <div className="text-sm text-gray-500 dark:text-gray-400">{opt.desc}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {/* Step 3: Duration */}
@@ -246,13 +271,13 @@ export const GeneratorPage: React.FC = () => {
                         <div className={`transition-all duration-300 ${step !== 4 ? 'opacity-0 -translate-x-full absolute' : 'opacity-100 translate-x-0'}`}>
                              <div className="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-4">{t.generator.step4}</div>
                              <div className="flex gap-4">
-                                <label className="flex-1 flex items-center gap-2 cursor-pointer p-3 border dark:border-gray-600 rounded-lg has-[:checked]:bg-purple-50 has-[:checked]:border-purple-400 dark:has-[:checked]:bg-purple-900/50 dark:has-[:checked]:border-purple-500">
+                                <label className="flex-1 flex items-center gap-2 cursor-pointer p-3 border dark:border-gray-600 rounded-lg has-[:checked]:bg-purple-50 has-[:checked]:border-purple-400 dark:has-[:checked]:bg-purple-900/50 dark:has-[:checked]:border-purple-500 transition-all">
                                     <input type="radio" name="includeExercises" checked={formData.includeExercises === true} onChange={() => setFormData(p => ({ ...p, includeExercises: true }))} className="form-radio text-[#6C63FF] bg-gray-100 dark:bg-gray-700"/>
-                                    <span className="text-gray-800 dark:text-gray-200">{t.generator.options.yes}</span>
+                                    <span className="text-gray-800 dark:text-gray-200 font-medium">{t.generator.options.yes}</span>
                                 </label>
-                                <label className="flex-1 flex items-center gap-2 cursor-pointer p-3 border dark:border-gray-600 rounded-lg has-[:checked]:bg-purple-50 has-[:checked]:border-purple-400 dark:has-[:checked]:bg-purple-900/50 dark:has-[:checked]:border-purple-500">
+                                <label className="flex-1 flex items-center gap-2 cursor-pointer p-3 border dark:border-gray-600 rounded-lg has-[:checked]:bg-purple-50 has-[:checked]:border-purple-400 dark:has-[:checked]:bg-purple-900/50 dark:has-[:checked]:border-purple-500 transition-all">
                                     <input type="radio" name="includeExercises" checked={formData.includeExercises === false} onChange={() => setFormData(p => ({ ...p, includeExercises: false }))} className="form-radio text-[#6C63FF] bg-gray-100 dark:bg-gray-700"/>
-                                     <span className="text-gray-800 dark:text-gray-200">{t.generator.options.no}</span>
+                                     <span className="text-gray-800 dark:text-gray-200 font-medium">{t.generator.options.no}</span>
                                 </label>
                             </div>
                         </div>
