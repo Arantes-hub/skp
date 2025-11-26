@@ -83,6 +83,8 @@ export const translations = {
       personalNotes: 'Notas Pessoais',
       notesPlaceholder: 'Escreva aqui as suas notas para este módulo...',
       notesSaved: 'Nota guardada!',
+      finishAndQuiz: 'Concluir Curso e Fazer Teste',
+      finalGrade: 'Nota Final',
     },
     account: {
         title: 'Minha Conta',
@@ -118,7 +120,7 @@ export const translations = {
       authError: 'Ocorreu um erro. Tente novamente.'
     },
     quiz: {
-      generating: 'A IA está a gerar o seu quiz...',
+      generating: 'A IA está a gerar o seu quiz final...',
       submit: 'Submeter Respostas',
       score: 'A sua pontuação: {score}/{total}',
       correct: 'Correta!',
@@ -246,6 +248,8 @@ export const translations = {
       personalNotes: 'Personal Notes',
       notesPlaceholder: 'Write your notes for this module here...',
       notesSaved: 'Note saved!',
+      finishAndQuiz: 'Finish Course & Take Final Exam',
+      finalGrade: 'Final Grade',
     },
     account: {
         title: 'My Account',
@@ -281,7 +285,7 @@ export const translations = {
       authError: 'An error occurred. Please try again.'
     },
     quiz: {
-      generating: 'The AI is generating your quiz...',
+      generating: 'The AI is generating your final quiz...',
       submit: 'Submit Answers',
       score: 'Your score: {score}/{total}',
       correct: 'Correct!',

@@ -19,14 +19,14 @@ const ProgressBar = ({ completed, total }: { completed: number; total: number })
     );
 };
 
-const CertificateModal = ({ course, user, onClose }: { course: Course, user: any, onClose: () => void }) => {
+const CertificateModal = ({ course, user, onClose, score }: { course: Course, user: any, onClose: () => void, score?: string }) => {
     const { language, showToast } = useAppContext();
     const t = translations[language].courseResult;
     const [customName, setCustomName] = useState(user.name);
     const [color, setColor] = useState('#6C63FF');
 
     const handleDownload = () => {
-        generateCertificate({ name: user.name, courseTitle: course.title, customName, color });
+        generateCertificate({ name: user.name, courseTitle: course.title, customName, color, score });
         showToast("Certificate downloaded!");
         onClose();
     }
@@ -89,7 +89,7 @@ const NotesSection: React.FC<{ courseId: string; moduleId: number }> = ({ course
 };
 
 export const CourseResultPage: React.FC = () => {
-    const { language, generatedCourse, currentUser, setPage, sharedCourse, toggleModuleCompletion, getCourseProgress, showToast, saveQuizScore, triggerModuleGeneration } = useAppContext();
+    const { language, generatedCourse, currentUser, setPage, sharedCourse, toggleModuleCompletion, getCourseProgress, showToast, saveQuizScore, getQuizScore, triggerModuleGeneration } = useAppContext();
     const t = translations[language];
 
     const courseData = sharedCourse || generatedCourse;
@@ -101,6 +101,7 @@ export const CourseResultPage: React.FC = () => {
     const [quiz, setQuiz] = useState<Quiz | null>(null);
     const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
     const [showCertModal, setShowCertModal] = useState(false);
+    const [finalScore, setFinalScore] = useState<{score: number, total: number} | null>(null);
 
     // Initial Load & Lazy Loading Logic
     useEffect(() => {
@@ -108,6 +109,8 @@ export const CourseResultPage: React.FC = () => {
             if (courseData && currentUser) {
                 const progress = await getCourseProgress(courseData.id);
                 setCompletedModules(new Set(progress.completedModules));
+                const savedScore = await getQuizScore(courseData.id);
+                if (savedScore) setFinalScore(savedScore);
             }
         };
         init();
@@ -170,16 +173,6 @@ export const CourseResultPage: React.FC = () => {
     };
 
     const handleGenerateModuleVideo = async (moduleIndex: number) => {
-        // Video logic remains mostly same but using setGeneratedCourse via context would be cleaner
-        // For now, we rely on the state passing through props or just re-render if context updates
-        // Note: Video generation on lazy loaded content works if content exists.
-        if (!activeModule.detailedContent) {
-             showToast("Cannot generate video for pending content.", "error");
-             return;
-        }
-        // ... (existing video logic implemented within the component state or extracted)
-        // Since we are using context for `courseData`, we might need a way to update video state globally
-        // For simplicity in this refactor, we are keeping the logic structure but acknowledging the context is source of truth.
         showToast("Video generation requires full context update. Feature coming in next update for lazy loaded modules.", "success");
     }
 
@@ -195,9 +188,21 @@ export const CourseResultPage: React.FC = () => {
         }
     };
 
+    const handleFinishAndQuiz = async () => {
+        // Mark current (last) module as done
+        if (!completedModules.has(safeActiveIndex)) {
+             await handleToggleModule(safeActiveIndex);
+        }
+        // Start quiz generation
+        handleGenerateQuiz();
+    };
+
     const handleQuizComplete = (score: number, total: number) => {
         saveQuizScore(courseData.id, score, total);
+        setFinalScore({ score, total });
         setQuiz(null);
+        showToast(`Quiz completed! You scored ${score}/${total}`, 'success');
+        setShowCertModal(true); // Automatically offer certificate
     }
 
     const handleShare = () => {
@@ -206,11 +211,16 @@ export const CourseResultPage: React.FC = () => {
         showToast(t.courseResult.linkCopied);
     };
 
+    const getScorePercentage = () => {
+        if (!finalScore) return undefined;
+        return Math.round((finalScore.score / finalScore.total) * 100) + '%';
+    }
+
     return (
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
             {isGeneratingQuiz && <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"><Spinner text={t.quiz.generating}/></div>}
             {quiz && <QuizView quiz={quiz} onClose={() => setQuiz(null)} onQuizComplete={handleQuizComplete} />}
-            {showCertModal && currentUser && <CertificateModal course={courseData} user={currentUser} onClose={() => setShowCertModal(false)} />}
+            {showCertModal && currentUser && <CertificateModal course={courseData} user={currentUser} onClose={() => setShowCertModal(false)} score={getScorePercentage()} />}
 
             {isReadOnly && (
                 <div className="mb-8 text-center p-4 bg-yellow-100 dark:bg-yellow-900/50 rounded-lg">
@@ -248,10 +258,16 @@ export const CourseResultPage: React.FC = () => {
                     {!isReadOnly && allModulesCompleted && (
                         <div className="mt-6 text-center p-4 bg-green-100 dark:bg-green-900/50 rounded-lg">
                             <p className="font-semibold text-green-800 dark:text-green-300">{t.courseResult.allModulesCompleted}</p>
+                            
+                            {finalScore && (
+                                <p className="text-xl font-bold text-green-700 dark:text-green-400 my-2">{t.courseResult.finalGrade}: {getScorePercentage()}</p>
+                            )}
+
                              <button onClick={() => currentUser?.isPremium ? setShowCertModal(true) : generateCertificate({ name: currentUser?.name || 'User', courseTitle: courseData.title })} className="mt-3 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all flex items-center justify-center gap-2">
                                 <Icons.FileDown className="w-5 h-5"/>{t.courseResult.downloadCertificate}
                             </button>
-                            {currentUser?.isPremium && <button onClick={handleGenerateQuiz} className="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all">{t.courseResult.generateQuiz}</button>}
+                            {/* Quiz button hidden here if already done or will be triggered by flow, but kept as backup */}
+                            {!finalScore && currentUser?.isPremium && <button onClick={handleGenerateQuiz} className="mt-3 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-all">{t.courseResult.generateQuiz}</button>}
                         </div>
                     )}
                 </aside>
@@ -322,15 +338,7 @@ export const CourseResultPage: React.FC = () => {
 
                             {!isReadOnly && currentUser && <NotesSection courseId={courseData.id} moduleId={safeActiveIndex} />}
                             
-                            {/* Video Section - simplified for lazy load compatibility */}
-                            {currentUser?.isPremium && !isReadOnly && (
-                                <div className="mt-8 border-t dark:border-gray-600 pt-6">
-                                    <h4 className="text-xl font-bold mb-4">{t.courseResult.generateModuleVideo}</h4>
-                                    <p className="text-sm text-gray-500 mb-2">Available for fully generated courses.</p>
-                                </div>
-                            )}
-                            
-                            {/* Next Module Navigation */}
+                            {/* Next Module / Finish Navigation */}
                             <div className="mt-12 flex justify-between">
                                 <button 
                                     onClick={() => handleModuleChange(Math.max(0, safeActiveIndex - 1))}
@@ -339,7 +347,7 @@ export const CourseResultPage: React.FC = () => {
                                 >
                                     Previous
                                 </button>
-                                {safeActiveIndex < courseData.modules.length - 1 && (
+                                {safeActiveIndex < courseData.modules.length - 1 ? (
                                     <button 
                                         onClick={() => {
                                             handleToggleModule(safeActiveIndex); // Mark current as done
@@ -348,6 +356,14 @@ export const CourseResultPage: React.FC = () => {
                                         className="px-6 py-2 rounded-lg bg-[#6C63FF] text-white hover:bg-[#5850e0]"
                                     >
                                         Mark Done & Next
+                                    </button>
+                                ) : (
+                                    <button 
+                                        onClick={handleFinishAndQuiz}
+                                        className="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-lg font-bold flex items-center gap-2"
+                                    >
+                                        <Icons.CheckCircle className="w-5 h-5"/>
+                                        {t.courseResult.finishAndQuiz}
                                     </button>
                                 )}
                             </div>

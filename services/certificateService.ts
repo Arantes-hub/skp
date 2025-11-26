@@ -6,6 +6,7 @@ interface CertificateOptions {
     courseTitle: string;
     customName?: string;
     color?: string;
+    score?: string; // New field for the grade
 }
 
 const hexToRgb = (hex: string) => {
@@ -18,7 +19,7 @@ const hexToRgb = (hex: string) => {
 };
 
 export const generateCertificate = (options: CertificateOptions) => {
-  const { name, courseTitle, customName, color = '#6C63FF' } = options;
+  const { name, courseTitle, customName, color = '#6C63FF', score } = options;
   const displayName = customName || name;
   const themeColor = hexToRgb(color);
 
@@ -40,29 +41,37 @@ export const generateCertificate = (options: CertificateOptions) => {
   doc.setFontSize(36);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(0, 0, 0);
-  doc.text('Certificate of Completion', pageWidth / 2, 60, { align: 'center' });
+  doc.text('Certificate of Completion', pageWidth / 2, 50, { align: 'center' });
 
   // Subtitle
   doc.setFontSize(18);
   doc.setFont('helvetica', 'normal');
-  doc.text('This certificate is proudly presented to', pageWidth / 2, 85, { align: 'center' });
+  doc.text('This certificate is proudly presented to', pageWidth / 2, 70, { align: 'center' });
 
   // User Name
   doc.setFontSize(32);
   doc.setFont('times', 'italic');
   doc.setTextColor(themeColor.r, themeColor.g, themeColor.b);
-  doc.text(displayName, pageWidth / 2, 110, { align: 'center' });
+  doc.text(displayName, pageWidth / 2, 90, { align: 'center' });
 
   // Description
   doc.setFontSize(18);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(0, 0, 0);
-  doc.text('for successfully completing the course', pageWidth / 2, 135, { align: 'center' });
+  doc.text('for successfully completing the course', pageWidth / 2, 110, { align: 'center' });
 
   // Course Title
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
-  doc.text(courseTitle, pageWidth / 2, 155, { align: 'center' });
+  doc.text(courseTitle, pageWidth / 2, 125, { align: 'center' });
+
+  // Score (If available)
+  if (score) {
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(themeColor.r, themeColor.g, themeColor.b);
+      doc.text(`Final Grade: ${score}`, pageWidth / 2, 140, { align: 'center' });
+  }
 
   // Date and Signature
   const today = new Date();
