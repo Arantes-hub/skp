@@ -76,7 +76,7 @@ export const PlansPage: React.FC = () => {
         }
         setIsRedirecting(type);
         try {
-            await stripeService.redirectToCheckout(currentUser.uid, type);
+            await stripeService.redirectToCheckout(currentUser.uid, currentUser.email, type);
         } catch (error) {
             console.error("Failed to redirect to checkout", error);
             showToast("Could not initiate the payment process.", 'error');

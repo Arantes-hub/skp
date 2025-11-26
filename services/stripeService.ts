@@ -2,38 +2,55 @@
 // services/stripeService.ts
 
 // ==============================================================================
-// ⚠️ CONFIGURAÇÃO CRÍTICA PARA PAGAMENTOS REAIS ⚠️
+// ⚠️ CONFIGURAÇÃO DE PAGAMENTOS (LIVE vs TEST) ⚠️
 //
-// Para que os pagamentos funcionem na sua conta bancária:
-// 1. Aceda a https://dashboard.stripe.com/
-// 2. Crie uma conta e ative o modo "Live" (ou use "Test Mode" para testes).
-// 3. Vá a "Product Catalog" e crie dois produtos: "Premium" e "Curso Único".
-// 4. Em cada produto, clique em "Create Payment Link".
-// 5. IMPORTANTE: Nas opções do Payment Link, em "After payment", selecione
-//    "Redirect customers to your website" e cole este link:
-//    https://skillspark-app.vercel.app/#/generator?payment_success=true
-//    (Substitua "skillspark-app.vercel.app" pelo seu domínio real da Vercel).
-// 6. Copie os links gerados pelo Stripe (começam por https://buy.stripe.com/...)
-//    e substitua as variáveis abaixo.
+// O Stripe tem dois modos: LIVE (Azul) e TEST (Laranja).
+// Os links criados num modo NÃO funcionam no outro.
+//
+// PARA TESTAR (Sem gastar dinheiro real):
+// 1. Ative o "Test Mode" no topo do Dashboard do Stripe.
+// 2. Crie produtos e links de pagamento neste modo.
+// 3. Configure o redirecionamento para: https://O-SEU-APP.vercel.app/#/generator?payment_success=true
+// 4. Copie os links "buy.stripe.com/test_..." para as variáveis abaixo.
+//
+// DADOS PARA PAGAMENTO DE TESTE:
+// Cartão: 4242 4242 4242 4242
+// Validade: Qualquer futuro (ex: 12/30)
+// CVC: 123
 // ==============================================================================
 
-// Link para Assinatura Mensal (Ex: €14.99) - Substitua pelo seu link real
-export const STRIPE_SUBSCRIPTION_LINK = "https://buy.stripe.com/28E5kCdnO8lm6Cmd61dUY02";
+// --- COLOQUE AQUI OS SEUS LINKS (Descomente o que estiver a usar) ---
 
-// Link para Compra Única (Ex: €4.99) - Substitua pelo seu link real
+// >>> MODO DE TESTE (Links começam geralmente por 'test_') <<<
+// export const STRIPE_SUBSCRIPTION_LINK = "https://buy.stripe.com/test_...";
+// export const STRIPE_ONE_TIME_LINK = "https://buy.stripe.com/test_...";
+
+// >>> MODO REAL / LIVE (Links para receber dinheiro a sério) <<<
+export const STRIPE_SUBSCRIPTION_LINK = "https://buy.stripe.com/28E5kCdnO8lm6Cmd61dUY02";
 export const STRIPE_ONE_TIME_LINK = "https://buy.stripe.com/5kQ28qfvWdFGgcW0jfdUY03"; 
 
-export const redirectToCheckout = async (userId: string, type: 'subscription' | 'one_time'): Promise<void> => {
+
+export const redirectToCheckout = async (userId: string, userEmail: string | null, type: 'subscription' | 'one_time'): Promise<void> => {
   const link = type === 'subscription' ? STRIPE_SUBSCRIPTION_LINK : STRIPE_ONE_TIME_LINK;
 
-  // Verificação de segurança para avisar o developer
+  // Verificação de segurança
+  if (link.includes("test_") && !window.location.hostname.includes("localhost") && !window.location.hostname.includes("vercel")) {
+    console.warn("Atenção: Está a usar links de teste num ambiente que parece produção.");
+  }
+
   if (link.includes("SUBSTITUA") || !link.startsWith("http")) {
-    alert("⚠️ ATENÇÃO: Os links de pagamento ainda não foram configurados.\n\nAbra o ficheiro 'services/stripeService.ts' e cole os seus links do Stripe.");
+    alert("⚠️ LINKS NÃO CONFIGURADOS.\n\nAbra 'services/stripeService.ts' e configure os seus links do Stripe.");
     return;
   }
 
-  // Adiciona o ID do utilizador para referência futura
+  // Constrói a URL com parâmetros
   const separator = link.includes('?') ? '&' : '?';
-  // 'client_reference_id' é usado pelo Stripe para ligar o pagamento ao utilizador
-  window.location.href = `${link}${separator}client_reference_id=${userId}&prefilled_email=${encodeURIComponent(userId)}`; 
+  let finalUrl = `${link}${separator}client_reference_id=${userId}`;
+
+  // Se tivermos email, preenchemos automaticamente no Stripe
+  if (userEmail) {
+    finalUrl += `&prefilled_email=${encodeURIComponent(userEmail)}`;
+  }
+
+  window.location.href = finalUrl; 
 };

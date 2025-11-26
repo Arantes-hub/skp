@@ -32,7 +32,7 @@ const PaywallModal = ({ onClose }: { onClose: () => void }) => {
         if (!currentUser) return;
         setIsLoading(type);
         try {
-            await redirectToCheckout(currentUser.uid, type);
+            await redirectToCheckout(currentUser.uid, currentUser.email, type);
         } catch (error) {
             console.error(error);
             setIsLoading(null);
