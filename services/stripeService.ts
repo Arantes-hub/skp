@@ -22,8 +22,8 @@
 // --- COLOQUE AQUI OS SEUS LINKS (Descomente o que estiver a usar) ---
 
 // >>> MODO DE TESTE (Links começam geralmente por 'test_') <<<
-// export const STRIPE_SUBSCRIPTION_LINK = "https://buy.stripe.com/test_...";
-// export const STRIPE_ONE_TIME_LINK = "https://buy.stripe.com/test_...";
+// export const STRIPE_SUBSCRIPTION_LINK = "https://buy.stripe.com/test_3cIfZj0pD5wU8mqeymf7i02";
+// export const STRIPE_ONE_TIME_LINK = "https://buy.stripe.com/test_7sYcN7c8l7F2eKO1LAf7i03";
 
 // >>> MODO REAL / LIVE (Links para receber dinheiro a sério) <<<
 export const STRIPE_SUBSCRIPTION_LINK = "https://buy.stripe.com/28E5kCdnO8lm6Cmd61dUY02";
