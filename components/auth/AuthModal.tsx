@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { translations } from '../../utils/translations';
@@ -22,6 +21,12 @@ export const AuthModal: React.FC = () => {
 
     const handleSuccessfulAuth = () => {
         showToast(isLogin ? t.loginSuccess : t.registerSuccess);
+        
+        // TRACK REGISTRATION ON META ADS
+        if (!isLogin && typeof fbq !== 'undefined') {
+            fbq('track', 'CompleteRegistration');
+        }
+
         setShowAuthModal(false);
     };
 

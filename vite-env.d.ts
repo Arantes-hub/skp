@@ -26,6 +26,8 @@ interface Window {
   };
 }
 
+declare var fbq: any;
+
 declare module "@google/genai" {
   export class GoogleGenAI {
     constructor(config: { apiKey: string });

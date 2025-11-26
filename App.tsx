@@ -61,6 +61,15 @@ const AppContent = () => {
                     
                     showToast(successMsg, 'success');
 
+                    // TRACK PURCHASE ON META ADS
+                    if (typeof fbq !== 'undefined') {
+                        fbq('track', 'Purchase', {
+                            value: 14.99,
+                            currency: 'EUR',
+                            content_name: 'Premium Subscription'
+                        });
+                    }
+
                     // 2. Remove the query parameter
                     const newUrl = window.location.href.replace('?payment_success=true', '').replace('&payment_success=true', '');
                     window.history.replaceState({}, document.title, newUrl);
