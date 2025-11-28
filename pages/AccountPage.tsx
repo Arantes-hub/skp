@@ -28,11 +28,12 @@ const EmptyState = () => {
 }
 
 export const AccountPage: React.FC = () => {
-    const { language, currentUser, viewCourseFromHistory, getUserCourses, setPage, getQuizScore } = useAppContext();
+    const { language, currentUser, viewCourseFromHistory, getUserCourses, setPage, getQuizScore, refreshProfile, showToast } = useAppContext();
     const t = translations[language];
 
     const [courseHistory, setCourseHistory] = useState<Course[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isRefreshing, setIsRefreshing] = useState(false);
     const [quizScores, setQuizScores] = useState<{ [courseId: string]: { score: number, total: number } }>({});
 
     useEffect(() => {
@@ -58,6 +59,13 @@ export const AccountPage: React.FC = () => {
         fetchCourses();
     }, [currentUser, getUserCourses, setPage, getQuizScore]);
 
+    const handleRefreshStatus = async () => {
+        setIsRefreshing(true);
+        await refreshProfile();
+        setIsRefreshing(false);
+        showToast(language === 'pt' ? 'Estado da conta atualizado!' : 'Account status refreshed!', 'success');
+    };
+
     if (!currentUser) return null;
 
     return (
@@ -66,7 +74,19 @@ export const AccountPage: React.FC = () => {
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">{t.account.title}</h1>
                 
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg mb-8">
-                    <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">{t.account.welcome} {currentUser.name}</h2>
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t.account.welcome} {currentUser.name}</h2>
+                        
+                        <button 
+                            onClick={handleRefreshStatus} 
+                            disabled={isRefreshing}
+                            className="text-sm flex items-center gap-2 text-[#6C63FF] hover:bg-purple-50 dark:hover:bg-gray-700 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-purple-100 dark:hover:border-gray-600"
+                        >
+                            <Icons.Rocket className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                            {language === 'pt' ? 'Atualizar Status' : 'Refresh Status'}
+                        </button>
+                    </div>
+
                     <div className="space-y-4 text-gray-700 dark:text-gray-300">
                         <p><strong>{t.account.email}</strong> {currentUser.email}</p>
                         <div className="flex items-center gap-4">

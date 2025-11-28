@@ -31,7 +31,8 @@ export const STRIPE_ONE_TIME_LINK = "https://buy.stripe.com/5kQ28qfvWdFGgcW0jfdU
 
 
 export const redirectToCheckout = async (userId: string, userEmail: string | null, type: 'subscription' | 'one_time'): Promise<void> => {
-  const link = type === 'subscription' ? STRIPE_SUBSCRIPTION_LINK : STRIPE_ONE_TIME_LINK;
+  const rawLink = type === 'subscription' ? STRIPE_SUBSCRIPTION_LINK : STRIPE_ONE_TIME_LINK;
+  const link = rawLink.trim();
 
   // Verificação de segurança
   if (link.includes("test_") && !window.location.hostname.includes("localhost") && !window.location.hostname.includes("vercel")) {
