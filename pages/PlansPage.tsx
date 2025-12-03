@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { translations } from '../utils/translations';
@@ -92,16 +93,16 @@ export const PlansPage: React.FC = () => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
                 <PlanCard
-                    title={t.freeTitle}
-                    description={t.freeDesc}
-                    price={t.freePrice}
+                    title={t.singleTitle}
+                    description={t.singleDesc}
+                    price={t.singlePrice}
                     priceDetails=""
                     features={t.features}
                     isPremium={false}
                     isCurrentUserPlan={false} // Always clickable to buy more courses
                     isRedirecting={isRedirecting === 'one_time'}
                     onButtonClick={() => handlePayment('one_time')}
-                    ctaText={t.ctaFree}
+                    ctaText={t.ctaSingle}
                 />
                 <PlanCard
                     title={t.premiumTitle}

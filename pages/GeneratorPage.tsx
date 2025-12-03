@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { translations } from '../utils/translations';
@@ -93,7 +92,7 @@ const PaywallModal = ({ onClose }: { onClose: () => void }) => {
 };
 
 export const GeneratorPage: React.FC = () => {
-    const { language, setPage, setGeneratedCourse, setTranslatedCourse, currentUser, setShowAuthModal, addCourseToHistory, getUserCourseCount, showToast } = useAppContext();
+    const { language, setPage, setGeneratedCourse, setTranslatedCourse, currentUser, setShowAuthModal, addCourseToHistory, showToast } = useAppContext();
     const t = translations[language];
 
     const [step, setStep] = useState(1);
@@ -154,20 +153,12 @@ export const GeneratorPage: React.FC = () => {
             return;
         }
 
-        // --- PAYWALL CHECK ---
-        // Skip check if user is premium
+        // --- STRICT PAYWALL CHECK (NO FREE TIER) ---
         if (!currentUser.isPremium) {
-            try {
-                const count = await getUserCourseCount();
-                if (count >= 1) {
-                    setShowPaywall(true);
-                    return;
-                }
-            } catch (err) {
-                console.error("Error checking course limit", err);
-            }
+            setShowPaywall(true);
+            return;
         }
-        // ---------------------
+        // -------------------------------------------
 
         setIsLoading(true);
         setLoadingMessage(t.generator.loading);

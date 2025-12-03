@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../contexts/AppContext';
 import { translations } from '../utils/translations';
@@ -73,6 +75,27 @@ export const AccountPage: React.FC = () => {
             <div className="max-w-4xl mx-auto">
                 <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">{t.account.title}</h1>
                 
+                {/* UPSELL BANNER FOR NON-PREMIUM USERS */}
+                {!currentUser.isPremium && (
+                    <div className="mb-8 bg-gradient-to-r from-[#6C63FF] to-purple-800 rounded-xl p-6 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
+                            <div className="bg-white/20 p-3 rounded-full">
+                                <Icons.Stars className="w-8 h-8 text-yellow-300" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold">{t.account.activatePremiumTitle}</h3>
+                                <p className="text-purple-100">{t.account.activatePremiumDesc}</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setPage('plans')}
+                            className="bg-white text-[#6C63FF] font-bold py-3 px-6 rounded-lg shadow-md hover:bg-gray-100 transition-colors whitespace-nowrap"
+                        >
+                            {t.account.upgradeToPremium}
+                        </button>
+                    </div>
+                )}
+
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg mb-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                         <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">{t.account.welcome} {currentUser.name}</h2>
@@ -91,7 +114,7 @@ export const AccountPage: React.FC = () => {
                         <p><strong>{t.account.email}</strong> {currentUser.email}</p>
                         <div className="flex items-center gap-4">
                             <strong>{t.account.plan}</strong> 
-                            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${currentUser.isPremium ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}>{currentUser.isPremium ? t.account.premiumPlan : t.account.freePlan}</span>
+                            <span className={`px-3 py-1 text-sm font-semibold rounded-full ${currentUser.isPremium ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'}`}>{currentUser.isPremium ? t.account.premiumPlan : t.account.standardPlan}</span>
                         </div>
                     </div>
                     <div className="border-t dark:border-gray-700 mt-6 pt-6">
